@@ -1,0 +1,33 @@
+name: Pull e analise de imagem Docker com Scout
+
+on:
+  workflow_dispatch:
+    inputs:
+      imagem:
+        description: "Nome da imagem Docker (ex: alpine, alpine:3.20)"
+        required: true
+        default: "alpine"
+        type: string
+
+jobs:
+  docker-scout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Faz o pull da imagem informada
+        run: docker pull ${{ inputs.imagem }}
+
+      - name: Lista as imagens baixadas
+        run: docker image ls
+
+      # O Docker Scout exige autenticacao no Docker Hub
+      - name: Login no Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Relatorio de vulnerabilidades com Docker Scout
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: ${{ inputs.imagem }}
